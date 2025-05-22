@@ -8,6 +8,7 @@ import {
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,15 +41,19 @@ const Header: React.FC = () => {
           </Link>
         </Button>
 
+        <ThemeToggle />
+
         <Button variant="ghost" size="icon" className="rounded-full relative">
           <Bell className="h-4 w-4" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-form rounded-full"></span>
           <span className="sr-only">Notifications</span>
         </Button>
 
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Settings className="h-4 w-4" />
-          <span className="sr-only">Settings</span>
+        <Button variant="ghost" size="icon" className="rounded-full" asChild>
+          <Link to="/settings">
+            <Settings className="h-4 w-4" />
+            <span className="sr-only">Settings</span>
+          </Link>
         </Button>
 
         <DropdownMenu>
@@ -66,13 +71,13 @@ const Header: React.FC = () => {
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              Profile
+              <Link to="/settings" className="w-full flex">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              Billing
+              <Link to="/settings?tab=billing" className="w-full flex">Billing</Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              Settings
+              <Link to="/settings" className="w-full flex">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

@@ -11,6 +11,7 @@ import {
   Link,
   BarChart2,
   PanelLeft,
+  LayoutTemplate,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -86,6 +87,12 @@ const Sidebar: React.FC = () => {
           isCollapsed={collapsed}
         />
         <NavItem
+          icon={<LayoutTemplate size={16} />}
+          label="Templates"
+          to="/templates"
+          isCollapsed={collapsed}
+        />
+        <NavItem
           icon={<Users size={16} />}
           label="Responses"
           to="/responses"
@@ -101,12 +108,6 @@ const Sidebar: React.FC = () => {
           icon={<BarChart2 size={16} />}
           label="Analytics"
           to="/analytics"
-          isCollapsed={collapsed}
-        />
-        <NavItem
-          icon={<Folder size={16} />}
-          label="Templates"
-          to="/templates"
           isCollapsed={collapsed}
         />
       </div>

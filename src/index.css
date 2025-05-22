@@ -127,3 +127,12 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a3a3a3;
 }
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-thumb {
+  background: #444;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
