@@ -1,10 +1,11 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FIELD_TYPE_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { Draggable, Droppable, DragDropContext } from "react-beautiful-dnd";
 
 interface FormFieldPickerProps {
   onAddField: (type: string) => void;
@@ -17,42 +18,74 @@ const FormFieldPicker = ({ onAddField }: FormFieldPickerProps) => {
     field.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <div className="space-y-4">
-      <div className="relative">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search fields..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8"
-        />
-      </div>
-      
-      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-        {filteredFields.map((field) => (
-          <Card
-            key={field.value}
-            className="flex items-center p-3 cursor-pointer hover:bg-muted transition-colors"
-            onClick={() => onAddField(field.value)}
-          >
-            <div className="text-xl mr-3">{field.icon}</div>
-            <div className="flex-1">
-              <h4 className="text-sm font-medium">{field.label}</h4>
-            </div>
-            <Button variant="ghost" size="sm" className="ml-2">
-              Add
-            </Button>
-          </Card>
-        ))}
+  // Helper function to handle field drag
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return; // Drop outside droppable area
+    
+    // When field is dragged from the picker to the form
+    if (result.destination.droppableId === "form-fields") {
+      const fieldType = result.draggableId;
+      onAddField(fieldType);
+    }
+  };
 
-        {filteredFields.length === 0 && (
-          <div className="text-center p-4 text-muted-foreground">
-            No fields found matching "{searchQuery}"
-          </div>
-        )}
+  return (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="space-y-4">
+        <div className="relative">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search fields..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        
+        <Droppable droppableId="field-picker" isDropDisabled>
+          {(provided) => (
+            <div
+              className="space-y-2 max-h-[500px] overflow-y-auto pr-1"
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+            >
+              {filteredFields.map((field, index) => (
+                <Draggable 
+                  key={field.value} 
+                  draggableId={field.value} 
+                  index={index}
+                >
+                  {(provided) => (
+                    <Card
+                      className="flex items-center p-3 cursor-pointer hover:bg-muted transition-colors"
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      onClick={() => onAddField(field.value)}
+                    >
+                      <div className="text-xl mr-3">{field.icon}</div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium">{field.label}</h4>
+                      </div>
+                      <Button variant="ghost" size="sm" className="ml-2">
+                        Add
+                      </Button>
+                    </Card>
+                  )}
+                </Draggable>
+              ))}
+
+              {filteredFields.length === 0 && (
+                <div className="text-center p-4 text-muted-foreground">
+                  No fields found matching "{searchQuery}"
+                </div>
+              )}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
       </div>
-    </div>
+    </DragDropContext>
   );
 };
 

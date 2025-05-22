@@ -1,12 +1,5 @@
 
-import React from "react";
-import {
-  Search,
-  Bell,
-  Settings,
-  Plus,
-  User,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import {
@@ -17,43 +10,75 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Bell, HelpCircle, Settings, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { useMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
 
-const Header: React.FC = () => {
+const Header = ({ toggleSidebar }: { toggleSidebar?: () => void }) => {
+  const isMobile = useMobile();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="flex items-center justify-between px-6 py-3 border-b border-border">
-      <div className="flex items-center gap-4">
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
+    <header
+      className={`sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6 transition-all ${
+        scrolled ? "shadow-sm" : ""
+      }`}
+    >
+      <div className="flex flex-1 items-center gap-4">
+        {isMobile && toggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="shrink-0 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        )}
+
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="rounded bg-primary p-1">
+              <Layers className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <span className="font-bold">FormCraft</span>
+          </div>
+        </Link>
+
+        <div className="relative ml-auto flex-1 md:grow-0 md:w-64 lg:w-96">
+          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
+          <Input
             type="search"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 text-sm bg-muted rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Search forms..."
+            className="pl-8 md:w-full"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" className="rounded-full" asChild>
-          <Link to="/create">
-            <Plus className="h-4 w-4" />
-            <span className="sr-only">Create new form</span>
-          </Link>
-        </Button>
-
         <ThemeToggle />
-
-        <Button variant="ghost" size="icon" className="rounded-full relative">
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-form rounded-full"></span>
+        
+        <Button variant="ghost" size="icon">
+          <Bell className="h-5 w-5" />
           <span className="sr-only">Notifications</span>
+          <span className="absolute right-1 top-1 flex h-2 w-2 rounded-full bg-primary" />
         </Button>
 
-        <Button variant="ghost" size="icon" className="rounded-full" asChild>
-          <Link to="/settings">
-            <Settings className="h-4 w-4" />
-            <span className="sr-only">Settings</span>
-          </Link>
+        <Button variant="ghost" size="icon">
+          <HelpCircle className="h-5 w-5" />
+          <span className="sr-only">Help</span>
         </Button>
 
         <DropdownMenu>
@@ -63,25 +88,27 @@ const Header: React.FC = () => {
               size="icon"
               className="rounded-full overflow-hidden"
             >
-              <User className="h-6 w-6" />
-              <span className="sr-only">User menu</span>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="/placeholder.svg" alt="User" />
+                <AvatarFallback>US</AvatarFallback>
+              </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link to="/settings" className="w-full flex">Profile</Link>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link to="/settings?tab=billing" className="w-full flex">Billing</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to="/settings" className="w-full flex">Settings</Link>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              Log out
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -91,3 +118,6 @@ const Header: React.FC = () => {
 };
 
 export default Header;
+
+// Add missing imports
+import { Menu, Layers, Search, LogOut } from "lucide-react";

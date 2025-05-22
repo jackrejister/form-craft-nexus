@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button";
 import { fetchForm, fetchFormResponses } from "@/lib/api";
 import { Form, FormResponse } from "@/types/form";
 import { toast } from "@/components/ui/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import ResponseTable from "@/components/forms/FormResponseViewer/ResponseTable";
 import ResponseSummary from "@/components/forms/FormResponseViewer/ResponseSummary";
 
 const FormResponses = () => {
-  const { formId } = useParams<{ formId: string }>();
+  const { formId = '' } = useParams<{ formId: string }>();
   const navigate = useNavigate();
 
   const [form, setForm] = useState<Form | null>(null);
@@ -18,7 +18,16 @@ const FormResponses = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const loadForm = async () => {
-    if (!formId) return;
+    if (!formId) {
+      console.error("No form ID provided");
+      toast({
+        title: "Error",
+        description: "No form ID provided",
+        variant: "destructive",
+      });
+      navigate("/forms");
+      return;
+    }
 
     try {
       const fetchedForm = await fetchForm(formId);
@@ -68,6 +77,23 @@ const FormResponses = () => {
     loadResponses();
   }, [formId]);
 
+  // If no formId, show appropriate error
+  if (!formId) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Form not found</h2>
+          <p className="text-muted-foreground mb-6">
+            The form you're looking for doesn't exist or has been deleted.
+          </p>
+          <Button onClick={() => navigate("/forms")}>
+            Go back to Forms
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!form) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -112,7 +138,7 @@ const FormResponses = () => {
               });
             }}
           >
-            Export All Responses
+            <Download className="mr-2 h-4 w-4" /> Export All Responses
           </Button>
         </div>
       </div>
@@ -121,7 +147,7 @@ const FormResponses = () => {
 
       <ResponseTable
         responses={
-          // Mock some responses for demonstration purposes
+          // Use real responses if available, otherwise show mock data
           responses.length > 0
             ? responses
             : [

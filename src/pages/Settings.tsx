@@ -26,15 +26,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Label } from "@/components/ui/label"; // Use Label instead of FormLabel
 import { 
   Bell, 
   CreditCard, 
@@ -136,28 +128,29 @@ const Settings = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <FormLabel>First Name</FormLabel>
-                      <Input defaultValue="John" />
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input id="firstName" defaultValue="John" />
                     </div>
                     <div className="space-y-2">
-                      <FormLabel>Last Name</FormLabel>
-                      <Input defaultValue="Smith" />
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input id="lastName" defaultValue="Smith" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <FormLabel>Email Address</FormLabel>
-                    <Input defaultValue="john.smith@example.com" />
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input id="email" defaultValue="john.smith@example.com" />
                   </div>
 
                   <div className="space-y-2">
-                    <FormLabel>Company</FormLabel>
-                    <Input defaultValue="Acme Inc." />
+                    <Label htmlFor="company">Company</Label>
+                    <Input id="company" defaultValue="Acme Inc." />
                   </div>
 
                   <div className="space-y-2">
-                    <FormLabel>Bio</FormLabel>
+                    <Label htmlFor="bio">Bio</Label>
                     <Textarea
+                      id="bio"
                       defaultValue="Product manager with over 5 years of experience in SaaS"
                       rows={4}
                     />
@@ -278,10 +271,10 @@ const Settings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Form Submissions</FormLabel>
-                    <FormDescription>
+                    <Label className="text-base">Form Submissions</Label>
+                    <p className="text-sm text-muted-foreground">
                       Receive notifications when someone submits your form
-                    </FormDescription>
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -290,10 +283,10 @@ const Settings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Comment Notifications</FormLabel>
-                    <FormDescription>
+                    <Label className="text-base">Comment Notifications</Label>
+                    <p className="text-sm text-muted-foreground">
                       Receive notifications when someone comments on your forms
-                    </FormDescription>
+                    </p>
                   </div>
                   <Switch defaultChecked />
                 </div>
@@ -302,10 +295,10 @@ const Settings = () => {
                 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Marketing Emails</FormLabel>
-                    <FormDescription>
+                    <Label className="text-base">Marketing Emails</Label>
+                    <p className="text-sm text-muted-foreground">
                       Receive emails about new features and promotions
-                    </FormDescription>
+                    </p>
                   </div>
                   <Switch />
                 </div>
@@ -332,16 +325,16 @@ const Settings = () => {
                 <h3 className="font-semibold">Change Password</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <FormLabel>Current Password</FormLabel>
-                    <Input type="password" />
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Input id="currentPassword" type="password" />
                   </div>
                   <div className="space-y-2">
-                    <FormLabel>New Password</FormLabel>
-                    <Input type="password" />
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input id="newPassword" type="password" />
                   </div>
                   <div className="space-y-2">
-                    <FormLabel>Confirm New Password</FormLabel>
-                    <Input type="password" />
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input id="confirmPassword" type="password" />
                   </div>
                 </div>
               </div>
@@ -351,10 +344,10 @@ const Settings = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">Two-Factor Authentication</FormLabel>
-                    <FormDescription>
+                    <Label className="text-base">Two-Factor Authentication</Label>
+                    <p className="text-sm text-muted-foreground">
                       Add an extra layer of security to your account
-                    </FormDescription>
+                    </p>
                   </div>
                   <Switch />
                 </div>

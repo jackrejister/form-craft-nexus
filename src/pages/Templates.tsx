@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Plus, Search, Star, StarOff, Filter } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "@/components/ui/use-toast";
 
 const templateCategories = [
   { id: "all", name: "All Templates" },
@@ -32,7 +33,36 @@ const templates = [
     title: "Customer Feedback Form",
     description: "Collect feedback from your customers about your products or services",
     category: "feedback",
-    fields: 8,
+    fields: [
+      {
+        id: "name",
+        type: "text",
+        label: "Your Name",
+        placeholder: "John Doe",
+        required: true,
+      },
+      {
+        id: "email",
+        type: "email",
+        label: "Email Address",
+        placeholder: "john@example.com",
+        required: true,
+      },
+      {
+        id: "rating",
+        type: "radio",
+        label: "How would you rate our service?",
+        options: ["Excellent", "Good", "Average", "Poor", "Very Poor"],
+        required: true,
+      },
+      {
+        id: "feedback",
+        type: "textarea",
+        label: "Please share your feedback",
+        placeholder: "Your thoughts and suggestions...",
+        required: false,
+      }
+    ],
     popular: true,
     new: false,
     image: null
@@ -42,7 +72,43 @@ const templates = [
     title: "Event Registration",
     description: "Register attendees for your upcoming events",
     category: "events",
-    fields: 10,
+    fields: [
+      {
+        id: "fullName",
+        type: "text",
+        label: "Full Name",
+        placeholder: "John Doe",
+        required: true,
+      },
+      {
+        id: "email",
+        type: "email",
+        label: "Email Address",
+        placeholder: "john@example.com",
+        required: true,
+      },
+      {
+        id: "phone",
+        type: "tel",
+        label: "Phone Number",
+        placeholder: "+1 (555) 123-4567",
+        required: false,
+      },
+      {
+        id: "ticket",
+        type: "select",
+        label: "Ticket Type",
+        options: ["General Admission", "VIP", "Early Bird"],
+        required: true,
+      },
+      {
+        id: "dietary",
+        type: "checkbox",
+        label: "Dietary Restrictions",
+        options: ["Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "None"],
+        required: false,
+      }
+    ],
     popular: true,
     new: false,
     image: null
@@ -52,7 +118,36 @@ const templates = [
     title: "Contact Form",
     description: "Simple contact form for your website",
     category: "contact",
-    fields: 5,
+    fields: [
+      {
+        id: "name",
+        type: "text",
+        label: "Your Name",
+        placeholder: "John Doe",
+        required: true,
+      },
+      {
+        id: "email",
+        type: "email",
+        label: "Email Address",
+        placeholder: "john@example.com",
+        required: true,
+      },
+      {
+        id: "subject",
+        type: "text",
+        label: "Subject",
+        placeholder: "How can we help you?",
+        required: true,
+      },
+      {
+        id: "message",
+        type: "textarea",
+        label: "Message",
+        placeholder: "Type your message here...",
+        required: true,
+      }
+    ],
     popular: true,
     new: false,
     image: null
@@ -90,6 +185,7 @@ const templates = [
 ];
 
 const Templates = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
@@ -99,6 +195,28 @@ const Templates = () => {
       prev.includes(id) ? prev.filter(fid => fid !== id) : [...prev, id]
     );
   };
+
+  const handleUseTemplate = useCallback((templateId: string) => {
+    const selectedTemplate = templates.find(template => template.id === templateId);
+    
+    if (selectedTemplate) {
+      toast({
+        title: "Template selected",
+        description: `Creating new form from ${selectedTemplate.title} template`,
+      });
+      
+      // Navigate to create form with template data
+      navigate("/create", { 
+        state: { 
+          template: {
+            title: selectedTemplate.title,
+            description: selectedTemplate.description,
+            fields: selectedTemplate.fields || [],
+          } 
+        } 
+      });
+    }
+  }, [navigate]);
 
   const filteredTemplates = templates.filter(template => {
     // Filter by category
@@ -124,7 +242,7 @@ const Templates = () => {
           </p>
         </div>
         <div>
-          <Button onClick={() => window.location.href = "/create"}>
+          <Button onClick={() => navigate("/create")}>
             <Plus className="mr-2 h-4 w-4" /> Create New Form
           </Button>
         </div>
@@ -184,10 +302,16 @@ const Templates = () => {
                   <CardDescription>{template.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{template.fields} fields</p>
+                  <p className="text-sm text-muted-foreground">{template.fields?.length || 0} fields</p>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">Use Template</Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handleUseTemplate(template.id)}
+                  >
+                    Use Template
+                  </Button>
                 </CardFooter>
               </Card>
             ))}

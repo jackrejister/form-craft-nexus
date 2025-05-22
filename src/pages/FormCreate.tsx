@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import FormBuilder from "@/components/forms/FormBuilder/FormBuilder";
 import { createForm } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/constants";
@@ -10,10 +10,48 @@ import { toast } from "@/components/ui/use-toast";
 const FormCreate = () => {
   const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const templateData = location.state?.template;
+
+  // Initialize form data with template if available
+  const getInitialFormData = () => {
+    if (templateData) {
+      return {
+        title: templateData.title || "Untitled Form",
+        description: templateData.description || "",
+        fields: templateData.fields || [],
+        theme: DEFAULT_THEME,
+        settings: {
+          savePartialResponses: true,
+          allowMultipleSubmissions: true,
+          enableCaptcha: false,
+          showProgressBar: true,
+          submitButtonText: "Submit",
+        },
+        integrations: [],
+      };
+    }
+
+    return {
+      title: "Untitled Form",
+      description: "",
+      fields: [],
+      theme: DEFAULT_THEME,
+      settings: {
+        savePartialResponses: true,
+        allowMultipleSubmissions: true,
+        enableCaptcha: false,
+        showProgressBar: true,
+        submitButtonText: "Submit",
+      },
+      integrations: [],
+    };
+  };
 
   const handleSaveForm = async (formData: Partial<Form>) => {
     try {
       setIsSaving(true);
+      console.log("Saving form data:", formData);
       const savedForm = await createForm(formData);
       toast({
         title: "Success",
@@ -32,25 +70,10 @@ const FormCreate = () => {
     }
   };
 
-  const initialFormData: Partial<Form> = {
-    title: "Untitled Form",
-    description: "",
-    fields: [],
-    theme: DEFAULT_THEME,
-    settings: {
-      savePartialResponses: true,
-      allowMultipleSubmissions: true,
-      enableCaptcha: false,
-      showProgressBar: true,
-      submitButtonText: "Submit",
-    },
-    integrations: [],
-  };
-
   return (
     <div className="space-y-8 animate-fade-in">
       <FormBuilder
-        initialForm={initialFormData}
+        initialForm={getInitialFormData()}
         onSave={handleSaveForm}
         isSaving={isSaving}
       />
