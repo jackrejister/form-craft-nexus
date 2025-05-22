@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input"; // Added missing import
 import FormBuilder from "@/components/forms/FormBuilder/FormBuilder";
 import FormPreview from "@/components/forms/FormPreview";
 import IntegrationsList from "@/components/forms/FormIntegrations/IntegrationsList";
