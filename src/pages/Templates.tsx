@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -205,13 +206,14 @@ const Templates = () => {
         description: `Creating new form from ${selectedTemplate.title} template`,
       });
       
-      // Navigate to create form with template data
+      // Properly format the template data for the form creator
+      // Ensure we're sending valid fields
       navigate("/create", { 
         state: { 
           template: {
             title: selectedTemplate.title,
             description: selectedTemplate.description,
-            fields: selectedTemplate.fields || [],
+            fields: Array.isArray(selectedTemplate.fields) ? selectedTemplate.fields : [],
           } 
         } 
       });

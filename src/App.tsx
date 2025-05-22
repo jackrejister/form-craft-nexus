@@ -17,6 +17,8 @@ import Templates from "@/pages/Templates";
 import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
+import Profile from "@/pages/Profile";
+import Responses from "@/pages/Responses";
 
 const queryClient = new QueryClient();
 
@@ -35,10 +37,12 @@ const App = () => (
               <Route path="/forms/:formId/edit" element={<FormEdit />} />
               <Route path="/forms/:formId/responses" element={<FormResponses />} />
               <Route path="/forms/:formId/preview" element={<FormPreview />} />
+              <Route path="/responses" element={<Responses />} />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
