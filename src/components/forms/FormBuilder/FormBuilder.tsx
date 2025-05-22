@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Form, FormField } from "@/types/form";
 import FormFieldComponent from "./FormFieldComponent";
@@ -18,12 +18,14 @@ import { v4 as uuidv4 } from "uuid";
 interface FormBuilderProps {
   initialForm?: Partial<Form>;
   onSave: (form: Partial<Form>) => void;
+  onChange?: (form: Partial<Form>) => void;
   isSaving?: boolean;
 }
 
 const FormBuilder = ({
   initialForm,
   onSave,
+  onChange,
   isSaving = false,
 }: FormBuilderProps) => {
   const [form, setForm] = useState<Partial<Form>>({
@@ -40,6 +42,13 @@ const FormBuilder = ({
     },
     integrations: initialForm?.integrations || [],
   });
+
+  // Notify parent component when form changes
+  useEffect(() => {
+    if (onChange) {
+      onChange(form);
+    }
+  }, [form, onChange]);
 
   const handleAddField = (type: string) => {
     const newField: FormField = {
@@ -87,14 +96,26 @@ const FormBuilder = ({
   const handleDragEnd = (result: any) => {
     if (!result.destination) return;
 
-    const items = Array.from(form.fields || []);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    // Handle field being dragged from picker to form area
+    if (result.source.droppableId === "field-picker" && 
+        result.destination.droppableId === "form-fields") {
+      const fieldType = result.draggableId;
+      handleAddField(fieldType);
+      return;
+    }
 
-    setForm({
-      ...form,
-      fields: items,
-    });
+    // Handle reordering of fields within the form area
+    if (result.source.droppableId === "form-fields" && 
+        result.destination.droppableId === "form-fields") {
+      const items = Array.from(form.fields || []);
+      const [reorderedItem] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, reorderedItem);
+
+      setForm({
+        ...form,
+        fields: items,
+      });
+    }
   };
 
   const handleUpdateTheme = (theme: any) => {

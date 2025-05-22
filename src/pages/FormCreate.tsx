@@ -2,14 +2,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import FormBuilder from "@/components/forms/FormBuilder/FormBuilder";
+import FormPreview from "@/components/forms/FormPreview";
 import { createForm } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/constants";
 import { Form } from "@/types/form";
 import { toast } from "@/components/ui/use-toast";
 import { v4 as uuidv4 } from "uuid";
+import { Button } from "@/components/ui/button";
+import { Eye, PenSquare } from "lucide-react";
 
 const FormCreate = () => {
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const templateData = location.state?.template;
@@ -57,6 +61,12 @@ const FormCreate = () => {
     };
   };
 
+  const [formData, setFormData] = useState(getInitialFormData());
+
+  const togglePreviewMode = () => {
+    setIsPreviewMode(!isPreviewMode);
+  };
+
   const handleSaveForm = async (formData: Partial<Form>) => {
     try {
       setIsSaving(true);
@@ -88,13 +98,48 @@ const FormCreate = () => {
     }
   };
 
+  const handleUpdateForm = (updatedForm: Partial<Form>) => {
+    setFormData(updatedForm as Form);
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
-      <FormBuilder
-        initialForm={getInitialFormData()}
-        onSave={handleSaveForm}
-        isSaving={isSaving}
-      />
+      <div className="flex justify-end gap-2">
+        <Button 
+          variant="outline" 
+          onClick={togglePreviewMode}
+          className="gap-2"
+        >
+          {isPreviewMode ? (
+            <>
+              <PenSquare className="h-4 w-4" /> Edit Form
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4" /> Preview Form
+            </>
+          )}
+        </Button>
+      </div>
+      
+      {isPreviewMode ? (
+        <FormPreview 
+          form={formData as Form} 
+          onSubmit={async () => {
+            toast({
+              title: "Preview Mode",
+              description: "This is a preview. Submissions aren't saved in preview mode.",
+            });
+          }}
+        />
+      ) : (
+        <FormBuilder
+          initialForm={formData}
+          onSave={handleSaveForm}
+          onChange={handleUpdateForm}
+          isSaving={isSaving}
+        />
+      )}
     </div>
   );
 };
