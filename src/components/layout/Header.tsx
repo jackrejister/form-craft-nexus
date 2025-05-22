@@ -13,11 +13,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bell, HelpCircle, Settings, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "react-router-dom";
 
 const Header = ({ toggleSidebar }: { toggleSidebar?: () => void }) => {
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {

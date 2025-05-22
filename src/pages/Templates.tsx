@@ -302,7 +302,11 @@ const Templates = () => {
                   <CardDescription>{template.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{template.fields?.length || 0} fields</p>
+                  <p className="text-sm text-muted-foreground">
+                    {Array.isArray(template.fields) 
+                      ? `${template.fields.length} fields` 
+                      : `${template.fields || 0} fields`}
+                  </p>
                 </CardContent>
                 <CardFooter>
                   <Button 
