@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Form, FormField } from "@/types/form";
 import { Button } from "@/components/ui/button";
@@ -15,11 +14,12 @@ import { Calendar, Clock, Upload, Star } from "lucide-react";
 
 interface FormPreviewProps {
   form: Form;
+  onSubmit?: (data: Record<string, any>) => Promise<void>;
   isSubmitting?: boolean;
   onSubmissionComplete?: () => void;
 }
 
-const FormPreview = ({ form, isSubmitting = false, onSubmissionComplete }: FormPreviewProps) => {
+const FormPreview = ({ form, onSubmit, isSubmitting = false, onSubmissionComplete }: FormPreviewProps) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -99,15 +99,21 @@ const FormPreview = ({ form, isSubmitting = false, onSubmissionComplete }: FormP
     setIsLoading(true);
     
     try {
-      console.log('Submitting form with integrations:', form.integrations);
-      await submitFormResponse(form.id, formData, form);
-      
-      toast({
-        title: "Form Submitted Successfully!",
-        description: form.integrations?.length 
-          ? `Your response has been saved and sent to ${form.integrations.filter(i => i.enabled).length} connected service(s).`
-          : "Your response has been saved.",
-      });
+      if (onSubmit) {
+        // Use custom onSubmit handler (for preview mode)
+        await onSubmit(formData);
+      } else {
+        // Use default submission logic
+        console.log('Submitting form with integrations:', form.integrations);
+        await submitFormResponse(form.id, formData, form);
+        
+        toast({
+          title: "Form Submitted Successfully!",
+          description: form.integrations?.length 
+            ? `Your response has been saved and sent to ${form.integrations.filter(i => i.enabled).length} connected service(s).`
+            : "Your response has been saved.",
+        });
+      }
       
       // Reset form
       setFormData({});
