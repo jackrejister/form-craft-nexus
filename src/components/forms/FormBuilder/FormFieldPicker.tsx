@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { FIELD_TYPE_OPTIONS } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FormFieldPickerProps {
   onAddField: (type: string) => void;
@@ -55,6 +56,18 @@ const FormFieldPicker = ({ onAddField }: FormFieldPickerProps) => {
     field.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getFieldsByCategory = (category: string) => {
+    return filteredFields.filter(field => field.category === category);
+  };
+
+  const categories = [
+    { id: 'basic', label: 'Basic', fields: getFieldsByCategory('basic') },
+    { id: 'choice', label: 'Choice', fields: getFieldsByCategory('choice') },
+    { id: 'datetime', label: 'Date & Time', fields: getFieldsByCategory('datetime') },
+    { id: 'advanced', label: 'Advanced', fields: getFieldsByCategory('advanced') },
+    { id: 'layout', label: 'Layout', fields: getFieldsByCategory('layout') },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="relative">
@@ -67,21 +80,60 @@ const FormFieldPicker = ({ onAddField }: FormFieldPickerProps) => {
         />
       </div>
       
-      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-        {filteredFields.map((field) => (
-          <DraggableFieldCard
-            key={field.value}
-            field={field}
-            onAddField={onAddField}
-          />
-        ))}
-
-        {filteredFields.length === 0 && (
-          <div className="text-center p-4 text-muted-foreground">
-            No fields found matching "{searchQuery}"
-          </div>
-        )}
-      </div>
+      {searchQuery ? (
+        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+          {filteredFields.map((field) => (
+            <DraggableFieldCard
+              key={field.value}
+              field={field}
+              onAddField={onAddField}
+            />
+          ))}
+          {filteredFields.length === 0 && (
+            <div className="text-center p-4 text-muted-foreground">
+              No fields found matching "{searchQuery}"
+            </div>
+          )}
+        </div>
+      ) : (
+        <Tabs defaultValue="basic" className="w-full">
+          <TabsList className="grid grid-cols-3 w-full mb-4">
+            <TabsTrigger value="basic">Basic</TabsTrigger>
+            <TabsTrigger value="choice">Choice</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="basic" className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+            {[...getFieldsByCategory('basic'), ...getFieldsByCategory('datetime')].map((field) => (
+              <DraggableFieldCard
+                key={field.value}
+                field={field}
+                onAddField={onAddField}
+              />
+            ))}
+          </TabsContent>
+          
+          <TabsContent value="choice" className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+            {getFieldsByCategory('choice').map((field) => (
+              <DraggableFieldCard
+                key={field.value}
+                field={field}
+                onAddField={onAddField}
+              />
+            ))}
+          </TabsContent>
+          
+          <TabsContent value="advanced" className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+            {[...getFieldsByCategory('advanced'), ...getFieldsByCategory('layout')].map((field) => (
+              <DraggableFieldCard
+                key={field.value}
+                field={field}
+                onAddField={onAddField}
+              />
+            ))}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 };

@@ -199,41 +199,66 @@ const FormBuilder = ({
         <div className="flex-1">
           <Card>
             <CardContent className="p-4">
-              <DndContext
-                sensors={sensors}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
+              <div
+                className="rounded-lg p-4 mb-4"
+                style={{
+                  backgroundColor: form.theme?.backgroundColor || DEFAULT_THEME.backgroundColor,
+                  color: form.theme?.textColor || DEFAULT_THEME.textColor,
+                  fontFamily: form.theme?.fontFamily || DEFAULT_THEME.fontFamily,
+                }}
               >
-                <div
-                  id="form-fields"
-                  className="space-y-4 min-h-[300px] border-2 border-dashed border-secondary rounded-md p-4"
+                <h2 className="text-2xl font-bold mb-2" style={{ color: form.theme?.textColor }}>
+                  {form.title || "Form Preview"}
+                </h2>
+                {form.description && (
+                  <p className="text-sm opacity-80 mb-4" style={{ color: form.theme?.textColor }}>
+                    {form.description}
+                  </p>
+                )}
+                
+                <DndContext
+                  sensors={sensors}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragEnd={handleDragEnd}
                 >
-                  {(form.fields || []).length === 0 && (
-                    <div className="flex flex-col items-center justify-center p-8 bg-secondary/20 rounded-md">
-                      <p className="text-muted-foreground mb-2">
-                        No fields yet. Drag fields from the panel on the right to add them.
-                      </p>
-                    </div>
-                  )}
-                  <SortableContext
-                    items={(form.fields || []).map((field) => field.id)}
-                    strategy={verticalListSortingStrategy}
+                  <div
+                    id="form-fields"
+                    className="space-y-4 min-h-[300px] border-2 border-dashed rounded-md p-4"
+                    style={{
+                      borderColor: form.theme?.accentColor ? form.theme.accentColor + '40' : '#e2e8f0',
+                      backgroundColor: form.theme?.backgroundColor ? 
+                        `color-mix(in srgb, ${form.theme.backgroundColor} 95%, transparent)` : 
+                        'rgba(0,0,0,0.02)'
+                    }}
                   >
-                    {(form.fields || []).map((field) => (
-                      <FormFieldComponent
-                        key={field.id}
-                        field={field}
-                        onUpdate={(updatedField) =>
-                          handleUpdateField(field.id, updatedField)
-                        }
-                        onRemove={() => handleRemoveField(field.id)}
-                        onDuplicate={() => handleDuplicateField(field.id)}
-                      />
-                    ))}
-                  </SortableContext>
-                </div>
-              </DndContext>
+                    {(form.fields || []).length === 0 && (
+                      <div className="flex flex-col items-center justify-center p-8 rounded-md"
+                           style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                        <p className="mb-2" style={{ color: form.theme?.textColor, opacity: 0.7 }}>
+                          No fields yet. Drag fields from the panel on the right to add them.
+                        </p>
+                      </div>
+                    )}
+                    <SortableContext
+                      items={(form.fields || []).map((field) => field.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {(form.fields || []).map((field) => (
+                        <FormFieldComponent
+                          key={field.id}
+                          field={field}
+                          onUpdate={(updatedField) =>
+                            handleUpdateField(field.id, updatedField)
+                          }
+                          onRemove={() => handleRemoveField(field.id)}
+                          onDuplicate={() => handleDuplicateField(field.id)}
+                        />
+                      ))}
+                    </SortableContext>
+                  </div>
+                </DndContext>
+              </div>
             </CardContent>
           </Card>
         </div>

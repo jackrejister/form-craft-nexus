@@ -1,27 +1,48 @@
 
 import { FormField, FieldType } from "@/types/form";
 
-export const FIELD_TYPE_OPTIONS: { value: FieldType; label: string; icon: string }[] = [
-  { value: 'text', label: 'Text', icon: '✍️' },
-  { value: 'textarea', label: 'Paragraph', icon: '📝' },
-  { value: 'number', label: 'Number', icon: '🔢' },
-  { value: 'email', label: 'Email', icon: '📧' },
-  { value: 'phone', label: 'Phone', icon: '📞' },
-  { value: 'select', label: 'Dropdown', icon: '🔽' },
-  { value: 'multiselect', label: 'Multi Select', icon: '✅' },
-  { value: 'radio', label: 'Multiple Choice', icon: '⭕' },
-  { value: 'checkbox', label: 'Checkboxes', icon: '☑️' },
-  { value: 'date', label: 'Date', icon: '📅' },
-  { value: 'time', label: 'Time', icon: '🕒' },
-  { value: 'file', label: 'File Upload', icon: '📎' },
-  { value: 'rating', label: 'Rating', icon: '⭐' },
-  { value: 'url', label: 'Website', icon: '🌐' },
-  { value: 'name', label: 'Name', icon: '👤' },
-  { value: 'address', label: 'Address', icon: '🏠' },
-  { value: 'payment', label: 'Payment', icon: '💳' },
-  { value: 'signature', label: 'Signature', icon: '✒️' },
-  { value: 'divider', label: 'Divider', icon: '➖' },
-  { value: 'heading', label: 'Heading', icon: '🔤' },
+export const FIELD_TYPE_OPTIONS: { value: FieldType; label: string; icon: string; category: string }[] = [
+  // Basic Fields
+  { value: 'text', label: 'Short Text', icon: '✍️', category: 'basic' },
+  { value: 'textarea', label: 'Long Text', icon: '📝', category: 'basic' },
+  { value: 'number', label: 'Number', icon: '🔢', category: 'basic' },
+  { value: 'email', label: 'Email', icon: '📧', category: 'basic' },
+  { value: 'phone', label: 'Phone', icon: '📞', category: 'basic' },
+  { value: 'url', label: 'Website URL', icon: '🌐', category: 'basic' },
+  
+  // Choice Fields
+  { value: 'select', label: 'Dropdown', icon: '🔽', category: 'choice' },
+  { value: 'multiselect', label: 'Multi Select', icon: '✅', category: 'choice' },
+  { value: 'radio', label: 'Multiple Choice', icon: '⭕', category: 'choice' },
+  { value: 'checkbox', label: 'Checkboxes', icon: '☑️', category: 'choice' },
+  { value: 'rating', label: 'Rating', icon: '⭐', category: 'choice' },
+  
+  // Date & Time
+  { value: 'date', label: 'Date', icon: '📅', category: 'datetime' },
+  { value: 'time', label: 'Time', icon: '🕒', category: 'datetime' },
+  
+  // Advanced Fields
+  { value: 'file', label: 'File Upload', icon: '📎', category: 'advanced' },
+  { value: 'name', label: 'Full Name', icon: '👤', category: 'advanced' },
+  { value: 'address', label: 'Address', icon: '🏠', category: 'advanced' },
+  { value: 'payment', label: 'Payment', icon: '💳', category: 'advanced' },
+  { value: 'signature', label: 'Signature', icon: '✒️', category: 'advanced' },
+  
+  // Layout Elements
+  { value: 'divider', label: 'Divider', icon: '➖', category: 'layout' },
+  { value: 'heading', label: 'Heading', icon: '🔤', category: 'layout' },
+];
+
+export const VALIDATION_TYPES = [
+  { value: 'required', label: 'Required' },
+  { value: 'minLength', label: 'Minimum Length' },
+  { value: 'maxLength', label: 'Maximum Length' },
+  { value: 'min', label: 'Minimum Value' },
+  { value: 'max', label: 'Maximum Value' },
+  { value: 'pattern', label: 'Pattern (Regex)' },
+  { value: 'email', label: 'Valid Email' },
+  { value: 'url', label: 'Valid URL' },
+  { value: 'phone', label: 'Valid Phone' },
 ];
 
 export const DEFAULT_FIELD: FormField = {
@@ -30,6 +51,7 @@ export const DEFAULT_FIELD: FormField = {
   label: 'Question',
   placeholder: 'Type your answer here',
   required: false,
+  validation: {},
 };
 
 export const DEFAULT_THEME = {

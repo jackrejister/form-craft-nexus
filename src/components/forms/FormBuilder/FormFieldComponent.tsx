@@ -26,8 +26,10 @@ import {
   ChevronDown,
   ChevronUp,
   Check,
+  Settings,
 } from "lucide-react";
 import { FIELD_TYPE_OPTIONS } from "@/lib/constants";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface FormFieldComponentProps {
   field: FormField;
@@ -43,6 +45,7 @@ const FormFieldComponent = ({
   onDuplicate,
 }: FormFieldComponentProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [validationOpen, setValidationOpen] = useState(false);
 
   const toggleExpanded = () => setExpanded(!expanded);
 
@@ -54,6 +57,21 @@ const FormFieldComponent = ({
   const getFieldTypeIcon = (type: string) => {
     const fieldType = FIELD_TYPE_OPTIONS.find((option) => option.value === type);
     return fieldType ? fieldType.icon : "❓";
+  };
+
+  const updateValidation = (key: string, value: any) => {
+    onUpdate({
+      validation: {
+        ...field.validation,
+        [key]: value,
+      },
+    });
+  };
+
+  const removeValidation = (key: string) => {
+    const newValidation = { ...field.validation };
+    delete newValidation[key];
+    onUpdate({ validation: newValidation });
   };
 
   return (
@@ -205,6 +223,25 @@ const FormFieldComponent = ({
             </div>
           )}
 
+          {field.type === "file" && (
+            <div className="space-y-2">
+              <Label>File Upload Settings</Label>
+              <div className="space-y-2">
+                <Input
+                  placeholder="Accepted file types (e.g., .pdf,.doc,.jpg)"
+                  value={field.validation?.pattern || ""}
+                  onChange={(e) => updateValidation("pattern", e.target.value)}
+                />
+                <Input
+                  placeholder="Max file size (MB)"
+                  type="number"
+                  value={field.validation?.max || ""}
+                  onChange={(e) => updateValidation("max", Number(e.target.value))}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center space-x-2">
             <Checkbox
               id={`field-${field.id}-required`}
@@ -213,6 +250,70 @@ const FormFieldComponent = ({
             />
             <Label htmlFor={`field-${field.id}-required`}>Required field</Label>
           </div>
+
+          <Collapsible open={validationOpen} onOpenChange={setValidationOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                <Settings className="mr-2 h-4 w-4" />
+                Validation Rules
+                <ChevronDown className="ml-auto h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 mt-3">
+              {(field.type === "text" || field.type === "textarea") && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Min Length</Label>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={field.validation?.minLength || ""}
+                      onChange={(e) => updateValidation("minLength", Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Max Length</Label>
+                    <Input
+                      type="number"
+                      placeholder="100"
+                      value={field.validation?.maxLength || ""}
+                      onChange={(e) => updateValidation("maxLength", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {field.type === "number" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label>Min Value</Label>
+                    <Input
+                      type="number"
+                      value={field.validation?.min || ""}
+                      onChange={(e) => updateValidation("min", Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Max Value</Label>
+                    <Input
+                      type="number"
+                      value={field.validation?.max || ""}
+                      onChange={(e) => updateValidation("max", Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label>Custom Pattern (Regex)</Label>
+                <Input
+                  placeholder="e.g., ^[A-Z].*"
+                  value={field.validation?.pattern || ""}
+                  onChange={(e) => updateValidation("pattern", e.target.value)}
+                />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       )}
 
