@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   DndContext,
@@ -27,6 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Settings, Paintbrush } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface FormBuilderProps {
   initialForm?: Partial<Form>;
@@ -41,6 +41,7 @@ const FormBuilder = ({
   onChange,
   isSaving = false,
 }: FormBuilderProps) => {
+  const { theme: appTheme } = useTheme();
   const [form, setForm] = useState<Partial<Form>>({
     title: initialForm?.title || "Untitled Form",
     description: initialForm?.description || "",
@@ -173,6 +174,30 @@ const FormBuilder = ({
     onSave(form);
   };
 
+  // Get appropriate background colors based on app theme
+  const getFormBackground = () => {
+    if (appTheme === 'dark') {
+      return form.theme?.backgroundColor === '#ffffff' ? '#1a1a1a' : form.theme?.backgroundColor || '#1a1a1a';
+    }
+    return form.theme?.backgroundColor || '#ffffff';
+  };
+
+  const getFormTextColor = () => {
+    if (appTheme === 'dark') {
+      return form.theme?.textColor === '#1a1a1a' ? '#ffffff' : form.theme?.textColor || '#ffffff';
+    }
+    return form.theme?.textColor || '#1a1a1a';
+  };
+
+  const getDropZoneBackground = () => {
+    const bgColor = getFormBackground();
+    // Create a slightly different shade for the drop zone
+    if (appTheme === 'dark') {
+      return 'rgba(255, 255, 255, 0.05)';
+    }
+    return 'rgba(0, 0, 0, 0.02)';
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -200,18 +225,38 @@ const FormBuilder = ({
           <Card>
             <CardContent className="p-4">
               <div
-                className="rounded-lg p-4 mb-4"
+                className="rounded-lg p-4 mb-4 transition-colors duration-200"
                 style={{
-                  backgroundColor: form.theme?.backgroundColor || DEFAULT_THEME.backgroundColor,
-                  color: form.theme?.textColor || DEFAULT_THEME.textColor,
+                  backgroundColor: getFormBackground(),
+                  color: getFormTextColor(),
                   fontFamily: form.theme?.fontFamily || DEFAULT_THEME.fontFamily,
                 }}
               >
-                <h2 className="text-2xl font-bold mb-2" style={{ color: form.theme?.textColor }}>
+                {form.theme?.coverImage && (
+                  <div className="mb-6 rounded-lg overflow-hidden">
+                    <img
+                      src={form.theme.coverImage}
+                      alt="Form Cover"
+                      className="w-full h-32 object-cover"
+                    />
+                  </div>
+                )}
+                
+                {form.theme?.logo && (
+                  <div className="mb-4 flex justify-center">
+                    <img
+                      src={form.theme.logo}
+                      alt="Form Logo"
+                      className="h-12 object-contain"
+                    />
+                  </div>
+                )}
+
+                <h2 className="text-2xl font-bold mb-2" style={{ color: getFormTextColor() }}>
                   {form.title || "Form Preview"}
                 </h2>
                 {form.description && (
-                  <p className="text-sm opacity-80 mb-4" style={{ color: form.theme?.textColor }}>
+                  <p className="text-sm opacity-80 mb-4" style={{ color: getFormTextColor() }}>
                     {form.description}
                   </p>
                 )}
@@ -224,18 +269,16 @@ const FormBuilder = ({
                 >
                   <div
                     id="form-fields"
-                    className="space-y-4 min-h-[300px] border-2 border-dashed rounded-md p-4"
+                    className="space-y-4 min-h-[300px] border-2 border-dashed rounded-md p-4 transition-colors duration-200"
                     style={{
                       borderColor: form.theme?.accentColor ? form.theme.accentColor + '40' : '#e2e8f0',
-                      backgroundColor: form.theme?.backgroundColor ? 
-                        `color-mix(in srgb, ${form.theme.backgroundColor} 95%, transparent)` : 
-                        'rgba(0,0,0,0.02)'
+                      backgroundColor: getDropZoneBackground()
                     }}
                   >
                     {(form.fields || []).length === 0 && (
                       <div className="flex flex-col items-center justify-center p-8 rounded-md"
-                           style={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
-                        <p className="mb-2" style={{ color: form.theme?.textColor, opacity: 0.7 }}>
+                           style={{ backgroundColor: 'rgba(128, 128, 128, 0.1)' }}>
+                        <p className="mb-2" style={{ color: getFormTextColor(), opacity: 0.7 }}>
                           No fields yet. Drag fields from the panel on the right to add them.
                         </p>
                       </div>

@@ -23,7 +23,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/use-toast";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, Upload, Star } from "lucide-react";
+import { validateField, ValidationError } from "@/lib/validation";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface FormPreviewProps {
   form: Form;
@@ -32,11 +34,13 @@ interface FormPreviewProps {
 }
 
 const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) => {
+  const { theme: appTheme } = useTheme();
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [errors, setErrors] = useState<ValidationError[]>([]);
 
   const fieldsPerPage = 5;
   const pages = Math.ceil(form.fields.length / fieldsPerPage);
@@ -50,20 +54,34 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       ...prev,
       [fieldId]: value,
     }));
+    
+    // Clear field-specific errors when user starts typing
+    setErrors(prev => prev.filter(error => error.field !== fieldId));
+  };
+
+  const validateCurrentPage = () => {
+    const pageErrors: ValidationError[] = [];
+    currentFields.forEach(field => {
+      const value = formData[field.id];
+      const error = validateField(field, value);
+      if (error) {
+        pageErrors.push({
+          field: field.id,
+          message: error
+        });
+      }
+    });
+    setErrors(pageErrors);
+    return pageErrors.length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
-    const requiredFieldsMissing = form.fields.some(
-      (field) => field.required && !formData[field.id]
-    );
-    
-    if (requiredFieldsMissing) {
+    if (!validateCurrentPage()) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
+        title: "Validation Error",
+        description: "Please fix the errors before submitting",
         variant: "destructive",
       });
       return;
@@ -94,7 +112,7 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
   };
 
   const nextPage = () => {
-    if (currentPage < pages - 1) {
+    if (validateCurrentPage() && currentPage < pages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -112,6 +130,24 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getFieldError = (fieldId: string) => {
+    return errors.find(error => error.field === fieldId)?.message;
+  };
+
+  const getFormBackground = () => {
+    if (appTheme === 'dark') {
+      return form.theme.backgroundColor === '#ffffff' ? '#1a1a1a' : form.theme.backgroundColor;
+    }
+    return form.theme.backgroundColor;
+  };
+
+  const getFormTextColor = () => {
+    if (appTheme === 'dark') {
+      return form.theme.textColor === '#1a1a1a' ? '#ffffff' : form.theme.textColor;
+    }
+    return form.theme.textColor;
+  };
+
   const renderField = (field: FormField) => {
     // Check conditional logic
     if (
@@ -121,28 +157,121 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       return null;
     }
 
+    const fieldError = getFieldError(field.id);
+    const textColor = getFormTextColor();
+
     switch (field.type) {
       case "text":
       case "email":
       case "phone":
       case "url":
-      case "name":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Input
               id={field.id}
-              type={field.type === "email" ? "email" : "text"}
+              type={field.type === "email" ? "email" : field.type === "url" ? "url" : "text"}
               placeholder={field.placeholder}
               value={formData[field.id] || ""}
               onChange={(e) => handleValueChange(field.id, e.target.value)}
               required={field.required}
+              className={fieldError ? "border-red-500" : ""}
+              style={{ 
+                borderRadius: form.theme.borderRadius,
+                borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+              }}
             />
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "name":
+        return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="First Name"
+                value={formData[field.id]?.firstName || ""}
+                onChange={(e) => handleValueChange(field.id, { 
+                  ...formData[field.id], 
+                  firstName: e.target.value 
+                })}
+                style={{ borderRadius: form.theme.borderRadius }}
+              />
+              <Input
+                placeholder="Last Name"
+                value={formData[field.id]?.lastName || ""}
+                onChange={(e) => handleValueChange(field.id, { 
+                  ...formData[field.id], 
+                  lastName: e.target.value 
+                })}
+                style={{ borderRadius: form.theme.borderRadius }}
+              />
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "address":
+        return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="space-y-2">
+              <Input
+                placeholder="Street Address"
+                value={formData[field.id]?.street || ""}
+                onChange={(e) => handleValueChange(field.id, { 
+                  ...formData[field.id], 
+                  street: e.target.value 
+                })}
+                style={{ borderRadius: form.theme.borderRadius }}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  placeholder="City"
+                  value={formData[field.id]?.city || ""}
+                  onChange={(e) => handleValueChange(field.id, { 
+                    ...formData[field.id], 
+                    city: e.target.value 
+                  })}
+                  style={{ borderRadius: form.theme.borderRadius }}
+                />
+                <Input
+                  placeholder="ZIP Code"
+                  value={formData[field.id]?.zip || ""}
+                  onChange={(e) => handleValueChange(field.id, { 
+                    ...formData[field.id], 
+                    zip: e.target.value 
+                  })}
+                  style={{ borderRadius: form.theme.borderRadius }}
+                />
+              </div>
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
@@ -150,9 +279,9 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       case "textarea":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Textarea
               id={field.id}
@@ -160,9 +289,17 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
               value={formData[field.id] || ""}
               onChange={(e) => handleValueChange(field.id, e.target.value)}
               required={field.required}
+              className={fieldError ? "border-red-500" : ""}
+              style={{ 
+                borderRadius: form.theme.borderRadius,
+                borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+              }}
             />
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
@@ -170,9 +307,9 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       case "number":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Input
               id={field.id}
@@ -180,12 +317,20 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
               placeholder={field.placeholder}
               value={formData[field.id] || ""}
               onChange={(e) =>
-                handleValueChange(field.id, e.target.valueAsNumber)
+                handleValueChange(field.id, e.target.value ? Number(e.target.value) : "")
               }
               required={field.required}
+              className={fieldError ? "border-red-500" : ""}
+              style={{ 
+                borderRadius: form.theme.borderRadius,
+                borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+              }}
             />
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
@@ -193,15 +338,22 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       case "select":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Select
               value={formData[field.id] || ""}
               onValueChange={(value) => handleValueChange(field.id, value)}
             >
-              <SelectTrigger id={field.id}>
+              <SelectTrigger 
+                id={field.id}
+                className={fieldError ? "border-red-500" : ""}
+                style={{ 
+                  borderRadius: form.theme.borderRadius,
+                  borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+                }}
+              >
                 <SelectValue placeholder={field.placeholder} />
               </SelectTrigger>
               <SelectContent>
@@ -212,42 +364,21 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
                 ))}
               </SelectContent>
             </Select>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
 
-      case "radio":
+      case "multiselect":
         return (
           <div className="space-y-2">
-            <Label>
+            <Label style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
-            </Label>
-            <RadioGroup
-              value={formData[field.id] || ""}
-              onValueChange={(value) => handleValueChange(field.id, value)}
-            >
-              {field.options?.map((option) => (
-                <div className="flex items-center space-x-2" key={option}>
-                  <RadioGroupItem value={option} id={`${field.id}-${option}`} />
-                  <Label htmlFor={`${field.id}-${option}`}>{option}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-            {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
-            )}
-          </div>
-        );
-
-      case "checkbox":
-        return (
-          <div className="space-y-2">
-            <Label>
-              {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <div className="space-y-2">
               {field.options?.map((option) => (
@@ -269,12 +400,153 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
                       handleValueChange(field.id, newValues);
                     }}
                   />
-                  <Label htmlFor={`${field.id}-${option}`}>{option}</Label>
+                  <Label htmlFor={`${field.id}-${option}`} style={{ color: textColor }}>
+                    {option}
+                  </Label>
                 </div>
               ))}
             </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "radio":
+        return (
+          <div className="space-y-2">
+            <Label style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <RadioGroup
+              value={formData[field.id] || ""}
+              onValueChange={(value) => handleValueChange(field.id, value)}
+            >
+              {field.options?.map((option) => (
+                <div className="flex items-center space-x-2" key={option}>
+                  <RadioGroupItem value={option} id={`${field.id}-${option}`} />
+                  <Label htmlFor={`${field.id}-${option}`} style={{ color: textColor }}>
+                    {option}
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "checkbox":
+        return (
+          <div className="space-y-2">
+            <Label style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="space-y-2">
+              {field.options?.map((option) => (
+                <div className="flex items-center space-x-2" key={option}>
+                  <Checkbox
+                    id={`${field.id}-${option}`}
+                    checked={
+                      Array.isArray(formData[field.id])
+                        ? formData[field.id]?.includes(option)
+                        : false
+                    }
+                    onCheckedChange={(checked) => {
+                      const currentValues = Array.isArray(formData[field.id])
+                        ? [...formData[field.id]]
+                        : [];
+                      const newValues = checked
+                        ? [...currentValues, option]
+                        : currentValues.filter((value) => value !== option);
+                      handleValueChange(field.id, newValues);
+                    }}
+                  />
+                  <Label htmlFor={`${field.id}-${option}`} style={{ color: textColor }}>
+                    {option}
+                  </Label>
+                </div>
+              ))}
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "rating":
+        return (
+          <div className="space-y-2">
+            <Label style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <Star
+                  key={rating}
+                  className={`h-8 w-8 cursor-pointer transition-colors ${
+                    formData[field.id] >= rating
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-gray-300'
+                  }`}
+                  onClick={() => handleValueChange(field.id, rating)}
+                />
+              ))}
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "file":
+        return (
+          <div className="space-y-2">
+            <Label htmlFor={field.id} style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div className="relative">
+              <Input
+                id={field.id}
+                type="file"
+                onChange={(e) => handleValueChange(field.id, e.target.files?.[0])}
+                required={field.required}
+                accept={field.validation?.pattern}
+                className={`${fieldError ? "border-red-500" : ""} file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80`}
+                style={{ 
+                  borderRadius: form.theme.borderRadius,
+                  borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+                }}
+              />
+              <Upload className="absolute right-3 top-3 h-4 w-4" style={{ color: textColor, opacity: 0.5 }} />
+            </div>
+            {field.validation?.max && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>
+                Max file size: {field.validation.max}MB
+              </p>
+            )}
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
@@ -282,9 +554,9 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       case "date":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Input
               id={field.id}
@@ -292,9 +564,17 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
               value={formData[field.id] || ""}
               onChange={(e) => handleValueChange(field.id, e.target.value)}
               required={field.required}
+              className={fieldError ? "border-red-500" : ""}
+              style={{ 
+                borderRadius: form.theme.borderRadius,
+                borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+              }}
             />
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
@@ -302,9 +582,9 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       case "time":
         return (
           <div className="space-y-2">
-            <Label htmlFor={field.id}>
+            <Label htmlFor={field.id} style={{ color: textColor }}>
               {field.label}
-              {field.required && <span className="text-destructive ml-1">*</span>}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
             </Label>
             <Input
               id={field.id}
@@ -312,29 +592,101 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
               value={formData[field.id] || ""}
               onChange={(e) => handleValueChange(field.id, e.target.value)}
               required={field.required}
+              className={fieldError ? "border-red-500" : ""}
+              style={{ 
+                borderRadius: form.theme.borderRadius,
+                borderColor: fieldError ? '#ef4444' : form.theme.accentColor + '40'
+              }}
             />
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
             {field.description && (
-              <p className="text-xs text-muted-foreground">{field.description}</p>
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
             )}
           </div>
         );
 
       case "heading":
         return (
-          <div>
-            <h3 className="text-lg font-semibold">{field.label}</h3>
-            {field.description && <p className="text-sm">{field.description}</p>}
+          <div className="py-2">
+            <h3 className="text-lg font-semibold" style={{ color: textColor }}>
+              {field.label}
+            </h3>
+            {field.description && (
+              <p className="text-sm mt-1" style={{ color: textColor, opacity: 0.8 }}>
+                {field.description}
+              </p>
+            )}
           </div>
         );
 
       case "divider":
-        return <hr className="my-4" />;
+        return (
+          <div className="py-2">
+            <hr className="border-t" style={{ borderColor: form.theme.accentColor + '40' }} />
+          </div>
+        );
+
+      case "signature":
+        return (
+          <div className="space-y-2">
+            <Label style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div 
+              className="border-2 border-dashed rounded h-32 flex items-center justify-center"
+              style={{ 
+                borderColor: form.theme.accentColor + '40',
+                borderRadius: form.theme.borderRadius 
+              }}
+            >
+              <p style={{ color: textColor, opacity: 0.7 }}>
+                Signature pad (Preview mode)
+              </p>
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
+
+      case "payment":
+        return (
+          <div className="space-y-2">
+            <Label style={{ color: textColor }}>
+              {field.label}
+              {field.required && <span className="text-red-500 ml-1">*</span>}
+            </Label>
+            <div 
+              className="border rounded p-4"
+              style={{ 
+                borderColor: form.theme.accentColor + '40',
+                borderRadius: form.theme.borderRadius 
+              }}
+            >
+              <p style={{ color: textColor, opacity: 0.7 }}>
+                Payment integration (Preview mode)
+              </p>
+            </div>
+            {fieldError && (
+              <p className="text-red-500 text-xs">{fieldError}</p>
+            )}
+            {field.description && (
+              <p className="text-xs" style={{ color: textColor, opacity: 0.7 }}>{field.description}</p>
+            )}
+          </div>
+        );
 
       default:
         return (
-          <div className="bg-muted p-4 rounded-md">
-            <p>
-              Field type "{field.type}" not implemented in preview mode yet.
+          <div className="bg-muted p-4 rounded-md" style={{ borderRadius: form.theme.borderRadius }}>
+            <p style={{ color: textColor }}>
+              Field type "{field.type}" preview coming soon.
             </p>
           </div>
         );
@@ -343,13 +695,25 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
 
   if (isSubmitted) {
     return (
-      <Card>
+      <Card
+        style={{
+          backgroundColor: getFormBackground(),
+          color: getFormTextColor(),
+          fontFamily: form.theme.fontFamily,
+          borderRadius: form.theme.borderRadius,
+        }}
+      >
         <CardContent className="pt-6 px-6 flex flex-col items-center justify-center min-h-[200px]">
-          <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mb-4">
-            <Check className="h-6 w-6 text-green-600" />
+          <div 
+            className="h-12 w-12 rounded-full flex items-center justify-center mb-4"
+            style={{ backgroundColor: form.theme.accentColor + '20' }}
+          >
+            <Check className="h-6 w-6" style={{ color: form.theme.accentColor }} />
           </div>
-          <h2 className="text-xl font-semibold mb-2">Thank you!</h2>
-          <p className="text-center text-muted-foreground mb-4">
+          <h2 className="text-xl font-semibold mb-2" style={{ color: getFormTextColor() }}>
+            Thank you!
+          </h2>
+          <p className="text-center mb-4" style={{ color: getFormTextColor(), opacity: 0.8 }}>
             {form.settings.confirmationMessage ||
               "Your response has been submitted successfully."}
           </p>
@@ -358,6 +722,10 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
               variant="outline"
               asChild
               className="gap-2"
+              style={{
+                borderColor: form.theme.accentColor,
+                color: form.theme.accentColor,
+              }}
             >
               <a href={form.settings.redirectAfterSubmit} target="_blank" rel="noreferrer">
                 Continue <ExternalLink className="h-4 w-4" />
@@ -372,8 +740,8 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
   return (
     <Card
       style={{
-        backgroundColor: form.theme.backgroundColor,
-        color: form.theme.textColor,
+        backgroundColor: getFormBackground(),
+        color: getFormTextColor(),
         fontFamily: form.theme.fontFamily,
         borderRadius: form.theme.borderRadius,
       }}
@@ -385,6 +753,10 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
             variant="outline"
             className="gap-1 text-xs"
             onClick={copyEmbedCode}
+            style={{
+              borderColor: form.theme.accentColor + '40',
+              color: getFormTextColor(),
+            }}
           >
             {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             {copied ? "Copied!" : "Copy embed code"}
@@ -393,28 +765,45 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
       )}
 
       <CardHeader>
-        {form.theme.logo && (
-          <img
-            src={form.theme.logo}
-            alt="Form Logo"
-            className="h-10 object-contain mb-4"
-          />
+        {form.theme.coverImage && (
+          <div className="mb-4 rounded-lg overflow-hidden -mx-6 -mt-6">
+            <img
+              src={form.theme.coverImage}
+              alt="Form Cover"
+              className="w-full h-32 object-cover"
+            />
+          </div>
         )}
+        
+        {form.theme.logo && (
+          <div className="mb-4 flex justify-center">
+            <img
+              src={form.theme.logo}
+              alt="Form Logo"
+              className="h-10 object-contain"
+            />
+          </div>
+        )}
+        
         <CardTitle
           className="text-xl font-bold"
-          style={{ color: form.theme.textColor }}
+          style={{ color: getFormTextColor() }}
         >
           {form.title}
         </CardTitle>
         {form.description && (
-          <p className="text-sm" style={{ color: form.theme.textColor }}>
+          <p className="text-sm" style={{ color: getFormTextColor(), opacity: 0.8 }}>
             {form.description}
           </p>
         )}
         {form.settings.showProgressBar && pages > 1 && (
           <div className="mt-4 space-y-1">
-            <Progress value={((currentPage + 1) / pages) * 100} className="h-2" />
-            <div className="flex justify-between text-xs text-muted-foreground">
+            <Progress 
+              value={((currentPage + 1) / pages) * 100} 
+              className="h-2"
+              style={{ backgroundColor: form.theme.accentColor + '20' }}
+            />
+            <div className="flex justify-between text-xs" style={{ color: getFormTextColor(), opacity: 0.7 }}>
               <span>
                 Page {currentPage + 1} of {pages}
               </span>
@@ -450,7 +839,8 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
                 type="button"
                 style={{
                   borderColor: form.theme.accentColor + "40",
-                  color: form.theme.textColor,
+                  color: getFormTextColor(),
+                  borderRadius: form.theme.borderRadius,
                 }}
               >
                 Previous
@@ -463,6 +853,7 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
                 style={{
                   backgroundColor: form.theme.accentColor,
                   color: "#fff",
+                  borderRadius: form.theme.borderRadius,
                 }}
               >
                 Next
@@ -474,6 +865,7 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
                 style={{
                   backgroundColor: form.theme.accentColor,
                   color: "#fff",
+                  borderRadius: form.theme.borderRadius,
                 }}
               >
                 {isSubmitting
@@ -490,6 +882,7 @@ const FormPreview = ({ form, onSubmit, isEmbedded = false }: FormPreviewProps) =
             style={{
               backgroundColor: form.theme.accentColor,
               color: "#fff",
+              borderRadius: form.theme.borderRadius,
             }}
           >
             {isSubmitting
