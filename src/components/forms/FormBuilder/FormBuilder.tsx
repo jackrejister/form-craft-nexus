@@ -18,13 +18,14 @@ import FormFieldComponent from "./FormFieldComponent";
 import FormFieldPicker from "./FormFieldPicker";
 import FormSettings from "./FormSettings";
 import FormTheme from "./FormTheme";
+import IntegrationsList from "../FormIntegrations/IntegrationsList";
 import { DEFAULT_THEME, DEFAULT_FIELD } from "@/lib/constants";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Paintbrush } from "lucide-react";
+import { Settings, Paintbrush, Link } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@/components/ThemeProvider";
 
@@ -122,9 +123,7 @@ const FormBuilder = ({
   };
 
   const handleDragOver = (event: DragOverEvent) => {
-    // Handle dragging from picker to form area
     if (event.over?.id === "form-fields" && event.active.data.current?.type === "field-type") {
-      // Will be handled in dragEnd
     }
   };
 
@@ -134,14 +133,12 @@ const FormBuilder = ({
 
     if (!over) return;
 
-    // Handle field being dragged from picker to form area
     if (active.data.current?.type === "field-type" && over.id === "form-fields") {
       const fieldType = active.id as string;
       handleAddField(fieldType);
       return;
     }
 
-    // Handle reordering of fields within the form area
     if (active.id !== over.id && over.id !== "form-fields") {
       const oldIndex = (form.fields || []).findIndex((field) => field.id === active.id);
       const newIndex = (form.fields || []).findIndex((field) => field.id === over.id);
@@ -167,6 +164,13 @@ const FormBuilder = ({
     setForm({
       ...form,
       settings: { ...form.settings, ...settings },
+    });
+  };
+
+  const handleUpdateIntegrations = (integrations: any) => {
+    setForm({
+      ...form,
+      integrations,
     });
   };
 
@@ -308,7 +312,7 @@ const FormBuilder = ({
 
         <div className="w-full lg:w-[300px]">
           <Tabs defaultValue="fields">
-            <TabsList className="grid grid-cols-3 w-full">
+            <TabsList className="grid grid-cols-4 w-full">
               <TabsTrigger value="fields">Fields</TabsTrigger>
               <TabsTrigger value="theme">
                 <Paintbrush className="h-4 w-4 mr-1" />
@@ -317,6 +321,10 @@ const FormBuilder = ({
               <TabsTrigger value="settings">
                 <Settings className="h-4 w-4 mr-1" />
                 Settings
+              </TabsTrigger>
+              <TabsTrigger value="integrations">
+                <Link className="h-4 w-4 mr-1" />
+                Connect
               </TabsTrigger>
             </TabsList>
             <TabsContent value="fields" className="mt-4">
@@ -332,6 +340,13 @@ const FormBuilder = ({
               <FormSettings
                 settings={form.settings}
                 onUpdateSettings={handleUpdateSettings}
+              />
+            </TabsContent>
+            <TabsContent value="integrations" className="mt-4">
+              <IntegrationsList
+                formId={form.id || "new"}
+                integrations={form.integrations || []}
+                onSave={handleUpdateIntegrations}
               />
             </TabsContent>
           </Tabs>

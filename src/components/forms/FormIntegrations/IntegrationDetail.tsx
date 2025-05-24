@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { FormIntegration } from "@/types/form";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { INTEGRATION_TYPES } from "@/lib/constants";
+import IntegrationTester from "./IntegrationTester";
 
 interface IntegrationDetailProps {
   integration: FormIntegration;
@@ -98,6 +98,9 @@ const IntegrationDetail = ({
                 }
                 placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
               />
+              <p className="text-xs text-muted-foreground">
+                Copy the ID from your Google Sheet URL between /d/ and /edit
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="sheets-tab">Sheet Name or ID</Label>
@@ -107,6 +110,9 @@ const IntegrationDetail = ({
                 onChange={(e) => handleConfigChange("sheetId", e.target.value)}
                 placeholder="Sheet1"
               />
+              <p className="text-xs text-muted-foreground">
+                The name of the sheet tab (default: Sheet1)
+              </p>
             </div>
           </>
         );
@@ -123,6 +129,9 @@ const IntegrationDetail = ({
               }
               placeholder="https://hooks.slack.com/services/..."
             />
+            <p className="text-xs text-muted-foreground">
+              Create an incoming webhook in your Slack workspace
+            </p>
           </div>
         );
 
@@ -138,10 +147,11 @@ const IntegrationDetail = ({
               }
               placeholder="https://hooks.zapier.com/..."
             />
+            <p className="text-xs text-muted-foreground">
+              Create a Webhook trigger in your Zapier workflow
+            </p>
           </div>
         );
-
-      // Add more cases for other integration types
 
       default:
         return (
@@ -188,6 +198,8 @@ const IntegrationDetail = ({
           <Button onClick={handleSave}>Save Changes</Button>
         </div>
       </div>
+
+      {integration.id && <IntegrationTester integration={editedIntegration} />}
     </div>
   );
 };

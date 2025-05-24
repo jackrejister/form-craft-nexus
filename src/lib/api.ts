@@ -1,6 +1,6 @@
-
 import { Form, FormResponse, FormStats, FormIntegration } from '@/types/form';
 import { MOCK_FORMS } from './constants';
+import { IntegrationService, IntegrationSubmissionData } from '@/services/integrationService';
 
 // Base API URL would come from environment variables in a real app
 const API_BASE_URL = 'https://api.example.com';
@@ -184,7 +184,8 @@ export const deleteFormIntegration = async (
 
 export const submitFormResponse = async (
   formId: string, 
-  responseData: Record<string, any>
+  responseData: Record<string, any>,
+  form?: Form
 ): Promise<FormResponse> => {
   // In a real app, this would make an API call
   // return fetch(`${API_BASE_URL}/forms/${formId}/responses`, {
@@ -194,15 +195,54 @@ export const submitFormResponse = async (
   // }).then(res => res.json());
   
   // Mock implementation
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Create the form response
+      const formResponse: FormResponse = {
         id: Math.random().toString(36).substr(2, 9),
         formId,
         data: responseData,
         submittedAt: new Date().toISOString(),
-      });
-    }, 700);
+      };
+
+      // If form is provided and has integrations, execute them
+      if (form && form.integrations && form.integrations.length > 0) {
+        console.log('Executing integrations for form submission...');
+        
+        // Prepare integration data
+        const integrationData: IntegrationSubmissionData = {
+          formTitle: form.title,
+          fields: form.fields.map(field => ({
+            id: field.id,
+            label: field.label,
+            type: field.type,
+            value: responseData[field.id] || null
+          })),
+          submittedAt: formResponse.submittedAt,
+          metadata: {
+            userAgent: navigator.userAgent,
+            referrer: document.referrer
+          }
+        };
+
+        // Execute integrations
+        try {
+          await IntegrationService.executeIntegrations(form.integrations, integrationData);
+          console.log('All integrations executed successfully');
+        } catch (integrationError) {
+          console.error('Some integrations failed:', integrationError);
+          // Don't reject the form submission if integrations fail
+        }
+      }
+
+      setTimeout(() => {
+        resolve(formResponse);
+      }, 700);
+    } catch (error) {
+      setTimeout(() => {
+        reject(error);
+      }, 700);
+    }
   });
 };
 
