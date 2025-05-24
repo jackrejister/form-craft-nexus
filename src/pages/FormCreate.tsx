@@ -19,7 +19,7 @@ const FormCreate = () => {
   const templateData = location.state?.template;
   
   // Initialize form data with template if available
-  const getInitialFormData = () => {
+  const getInitialFormData = (): Partial<Form> => {
     if (templateData) {
       // Process template fields to ensure they have proper IDs
       const fields = Array.isArray(templateData.fields) 
@@ -61,7 +61,7 @@ const FormCreate = () => {
     };
   };
 
-  const [formData, setFormData] = useState(getInitialFormData());
+  const [formData, setFormData] = useState<Partial<Form>>(getInitialFormData());
 
   const togglePreviewMode = () => {
     setIsPreviewMode(!isPreviewMode);
@@ -99,7 +99,7 @@ const FormCreate = () => {
   };
 
   const handleUpdateForm = (updatedForm: Partial<Form>) => {
-    setFormData(updatedForm as Form);
+    setFormData(updatedForm);
   };
 
   return (

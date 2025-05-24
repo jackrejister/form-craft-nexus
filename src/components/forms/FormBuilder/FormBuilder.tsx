@@ -1,6 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { Form, FormField } from "@/types/form";
 import FormFieldComponent from "./FormFieldComponent";
 import FormFieldPicker from "./FormFieldPicker";
@@ -12,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Paintbrush, LinkIcon } from "lucide-react";
+import { Settings, Paintbrush } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 
 interface FormBuilderProps {
@@ -42,6 +55,16 @@ const FormBuilder = ({
     },
     integrations: initialForm?.integrations || [],
   });
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Notify parent component when form changes
   useEffect(() => {
@@ -93,28 +116,42 @@ const FormBuilder = ({
     }
   };
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    // Handle dragging from picker to form area
+    if (event.over?.id === "form-fields" && event.active.data.current?.type === "field-type") {
+      // Will be handled in dragEnd
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+
+    if (!over) return;
 
     // Handle field being dragged from picker to form area
-    if (result.source.droppableId === "field-picker" && 
-        result.destination.droppableId === "form-fields") {
-      const fieldType = result.draggableId;
+    if (active.data.current?.type === "field-type" && over.id === "form-fields") {
+      const fieldType = active.id as string;
       handleAddField(fieldType);
       return;
     }
 
     // Handle reordering of fields within the form area
-    if (result.source.droppableId === "form-fields" && 
-        result.destination.droppableId === "form-fields") {
-      const items = Array.from(form.fields || []);
-      const [reorderedItem] = items.splice(result.source.index, 1);
-      items.splice(result.destination.index, 0, reorderedItem);
+    if (active.id !== over.id && over.id !== "form-fields") {
+      const oldIndex = (form.fields || []).findIndex((field) => field.id === active.id);
+      const newIndex = (form.fields || []).findIndex((field) => field.id === over.id);
 
-      setForm({
-        ...form,
-        fields: items,
-      });
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newFields = arrayMove(form.fields || [], oldIndex, newIndex);
+        setForm({
+          ...form,
+          fields: newFields,
+        });
+      }
     }
   };
 
@@ -129,13 +166,6 @@ const FormBuilder = ({
     setForm({
       ...form,
       settings: { ...form.settings, ...settings },
-    });
-  };
-
-  const handleUpdateIntegrations = (integrations: any) => {
-    setForm({
-      ...form,
-      integrations,
     });
   };
 
@@ -169,50 +199,41 @@ const FormBuilder = ({
         <div className="flex-1">
           <Card>
             <CardContent className="p-4">
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="form-fields">
-                  {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-4 min-h-[300px]"
-                    >
-                      {(form.fields || []).length === 0 && (
-                        <div className="flex flex-col items-center justify-center p-8 bg-secondary/20 rounded-md border-2 border-dashed border-secondary">
-                          <p className="text-muted-foreground mb-2">
-                            No fields yet. Add your first field from the panel on the right.
-                          </p>
-                        </div>
-                      )}
-                      {(form.fields || []).map((field, index) => (
-                        <Draggable
-                          key={field.id}
-                          draggableId={field.id}
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <FormFieldComponent
-                                field={field}
-                                onUpdate={(updatedField) =>
-                                  handleUpdateField(field.id, updatedField)
-                                }
-                                onRemove={() => handleRemoveField(field.id)}
-                                onDuplicate={() => handleDuplicateField(field.id)}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
+              <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
+                <div
+                  id="form-fields"
+                  className="space-y-4 min-h-[300px] border-2 border-dashed border-secondary rounded-md p-4"
+                >
+                  {(form.fields || []).length === 0 && (
+                    <div className="flex flex-col items-center justify-center p-8 bg-secondary/20 rounded-md">
+                      <p className="text-muted-foreground mb-2">
+                        No fields yet. Drag fields from the panel on the right to add them.
+                      </p>
                     </div>
                   )}
-                </Droppable>
-              </DragDropContext>
+                  <SortableContext
+                    items={(form.fields || []).map((field) => field.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {(form.fields || []).map((field) => (
+                      <FormFieldComponent
+                        key={field.id}
+                        field={field}
+                        onUpdate={(updatedField) =>
+                          handleUpdateField(field.id, updatedField)
+                        }
+                        onRemove={() => handleRemoveField(field.id)}
+                        onDuplicate={() => handleDuplicateField(field.id)}
+                      />
+                    ))}
+                  </SortableContext>
+                </div>
+              </DndContext>
             </CardContent>
           </Card>
         </div>
