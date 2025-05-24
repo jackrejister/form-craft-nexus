@@ -19,6 +19,7 @@ import Settings from "@/pages/Settings";
 import NotFound from "@/pages/NotFound";
 import Profile from "@/pages/Profile";
 import Responses from "@/pages/Responses";
+import DocumentationPage from "@/pages/Documentation";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/documentation" element={<DocumentationPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

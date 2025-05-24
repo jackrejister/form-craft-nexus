@@ -1,5 +1,5 @@
-
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +26,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label"; // Use Label instead of FormLabel
+import { Label } from "@/components/ui/label";
 import { 
   Bell, 
   CreditCard, 
@@ -35,13 +35,18 @@ import {
   LogOut, 
   Mail, 
   Shield, 
-  UserCircle 
+  UserCircle,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
+  const [showProductionKey, setShowProductionKey] = useState(false);
+  const [showDevelopmentKey, setShowDevelopmentKey] = useState(false);
+  const navigate = useNavigate();
 
   const handleSave = () => {
     setLoading(true);
@@ -55,6 +60,13 @@ const Settings = () => {
       });
     }, 1000);
   };
+
+  const handleViewDocumentation = () => {
+    navigate("/documentation");
+  };
+
+  const productionKey = "pk_live_1234567890abcdef1234567890abcdef";
+  const developmentKey = "pk_test_abcdef1234567890abcdef1234567890";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -408,9 +420,16 @@ const Settings = () => {
                       <div className="flex items-center gap-2">
                         <Input
                           className="font-mono w-52"
-                          value="•••••••••••••••••••••••••"
+                          value={showProductionKey ? productionKey : "•••••••••••••••••••••••••"}
                           readOnly
                         />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowProductionKey(!showProductionKey)}
+                        >
+                          {showProductionKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
                         <Button variant="outline" size="sm">
                           Copy
                         </Button>
@@ -428,9 +447,16 @@ const Settings = () => {
                       <div className="flex items-center gap-2">
                         <Input
                           className="font-mono w-52"
-                          value="•••••••••••••••••••••••••"
+                          value={showDevelopmentKey ? developmentKey : "•••••••••••••••••••••••••"}
                           readOnly
                         />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setShowDevelopmentKey(!showDevelopmentKey)}
+                        >
+                          {showDevelopmentKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
                         <Button variant="outline" size="sm">
                           Copy
                         </Button>
@@ -447,7 +473,7 @@ const Settings = () => {
                 <p className="text-muted-foreground">
                   Learn how to integrate our API into your applications
                 </p>
-                <Button variant="outline">
+                <Button variant="outline" onClick={handleViewDocumentation}>
                   View Documentation
                 </Button>
               </div>
